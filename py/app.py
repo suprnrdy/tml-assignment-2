@@ -14,20 +14,22 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['*'], all
 
 ### EDIT CODE BELOW ###
 
-answer_question_1 = """ 
-Answered question 1 here
+answer_question_1 = """
+Underfitting is when our model has a high bias and does not fit our data very well. For example, if the data looks more like a curve, but the model is a straight line, this is underfitting.  We can tell by checking our data against the validation data set. If the loss is really bad on this set, we've got underfitting.
+
+Overfitting is when our model ha sa high variance. In otherwords it is too tightly coupled to our data and is not generalized. This happens when you run too many epocs during training and you can tell you're overfitting if your error rate improves for a while and then gets worse again.
 """
 
-answer_question_2 = """ 
-Answered question 2 here
+answer_question_2 = """
+Gradient decent is an iterative process that aims to find the local minimum of a function. We accomplish this by moving in the direction of the steepest decent (or negative of the gradient). Gradient decent is used to update the parameters of our model.
 """
 
-answer_question_3 = """ 
-Answered question 3 here
+answer_question_3 = """
+The goal of regression is to help understand how the dependent variable changes when any one of the independent variables is varied. One example of regression analysis is Mean Squared Error, which is a loss which is the difference between some predicitons that you make (your model) and the actual value.
 """
 
 ## Replace none with your model
-pred_model = None 
+pred_model = 'export.pkl'
 
 @app.route("/api/answers_to_hw", methods=["GET"])
 async def answers_to_hw(request):
@@ -43,6 +45,9 @@ async def classify_url(request):
     url_to_predict = body["url"]
 
     ## Make your prediction and store it in the preds variable
+    bytes = await get_bytes(request.query_params[url_to_predict])
+    img = open_image(BytesIO(bytes))
+    _,_,losses = learner.predict(img)
 
     return JSONResponse({
         "predictions": preds,
