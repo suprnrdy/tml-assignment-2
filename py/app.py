@@ -7,12 +7,18 @@ import os
 from fastai import *
 from fastai.vision import *
 import urllib
+import aiohttp
 
 app = Starlette(debug=True)
 
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['*'], allow_methods=['*'])
 
 ### EDIT CODE BELOW ###
+
+async def get_bytes(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.read()
 
 answer_question_1 = """
 Underfitting is when our model has a high bias and does not fit our data very well. For example, if the data looks more like a curve, but the model is a straight line, this is underfitting.  We can tell by checking our data against the validation data set. If the loss is really bad on this set, we've got underfitting.
@@ -29,7 +35,8 @@ The goal of regression is to help understand how the dependent variable changes 
 """
 
 ## Replace none with your model
-pred_model = 'export.pkl'
+path = Path("./")
+learn = load_learner(path)
 
 @app.route("/api/answers_to_hw", methods=["GET"])
 async def answers_to_hw(request):
@@ -37,7 +44,7 @@ async def answers_to_hw(request):
 
 @app.route("/api/class_list", methods=["GET"])
 async def class_list(request):
-    return JSONResponse([ "Replace this array with a list of your classes extracted from your model" ])
+    return JSONResponse(learn.data.classes)
 
 @app.route("/api/classify", methods=["POST"])
 async def classify_url(request):
@@ -45,12 +52,16 @@ async def classify_url(request):
     url_to_predict = body["url"]
 
     ## Make your prediction and store it in the preds variable
-    bytes = await get_bytes(request.query_params[url_to_predict])
+    bytes = await get_bytes(url_to_predict)
     img = open_image(BytesIO(bytes))
-    _,_,losses = learner.predict(img)
+    pred_class,pred_idx,losses = learn.predict(img)
 
     return JSONResponse({
-        "predictions": preds,
+        "predictions": sorted(
+        zip(learn.data.classes, map(float, losses)),
+        key=lambda p: p[1],
+        reverse=True
+        ),
     })
 
 ### EDIT CODE ABOVE ###
